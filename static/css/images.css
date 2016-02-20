@@ -1,0 +1,8 @@
+span.thumb {
+	height: 180px;
+	width: 170px;
+	display: inline-block;
+	float: left;
+	text-align: center;
+	vertical-align: middle;
+}
