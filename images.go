@@ -46,14 +46,25 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Dispel - Image Database</title>
+		<title>Dispel - {{.}}</title>
 		<link rel="stylesheet" href="/static/css/milligram.min.css">
 		<link rel="stylesheet" href="/static/css/images.css">
 	</head>
 	<body>
-		<div>
-			<img src="/static/images/{{.}}" />
+		<header>
+			Header
+		</header>
+		<div class="flex">
+			<div class="sidebar">
+				Sidebar
+			</div>
+			<div class="content">
+				<img style="max-width: 100%;" src="/static/images/{{.}}" />
+			</div>
 		</div>
+		<footer>
+			Footer
+		</footer>
 	</body>
 </html>
 `))

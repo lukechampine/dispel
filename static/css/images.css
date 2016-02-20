@@ -1,8 +1,41 @@
 span.thumb {
-	height: 180px;
-	width: 170px;
 	display: inline-block;
 	float: left;
+	height: 180px;
 	text-align: center;
 	vertical-align: middle;
+	width: 170px;
+}
+
+header, footer {
+	background: #2db34a;
+	border-radius: 6px;
+	color: #fff;
+	display: block;
+	margin: 0 1.5% 24px 1.5%;
+	padding: 24px 15px;
+	text-align: center;
+}
+
+.flex {
+	display: flex;
+}
+
+.sidebar {
+	background: #2db34a;
+	border-radius: 6px;
+	color: #fff;
+	margin: 0 1.5% 24px 1.5%;
+	min-width: 16em;
+	padding: 24px 15px;
+	text-align: center;
+}
+
+.content {
+	background: #2db34a;
+	border-radius: 6px;
+	flex: 1;
+	margin: 0 1.5% 24px 1.5%;
+	padding: 24px 15px;
+	text-align: center;
 }
