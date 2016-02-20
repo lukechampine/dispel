@@ -128,7 +128,7 @@ func (db *imageDB) searchHandler(w http.ResponseWriter, tags string) {
 
 func (db *imageDB) indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	if req.FormValue("t") == "" {
-		http.ServeFile(w, req, "static/images.html")
+		http.ServeFile(w, req, "./static/images.html")
 	} else {
 		db.searchHandler(w, req.FormValue("t"))
 	}
