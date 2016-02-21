@@ -15,20 +15,21 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 		<title>Dispel - Image Database</title>
 		<link rel="stylesheet" href="/static/css/milligram.min.css">
 		<link rel="stylesheet" href="/static/css/images.css">
+		<script src="/static/js/images.js"></script>
 	</head>
 	<body>
 		<header>
 			Header
 		</header>
 		<div style="margin: 0 1.5% 24px 1.5%;">
-			<input type="search" placeholder="yeb guac" />
+			<input id="searchbar" type="search" placeholder="yeb guac" value="{{ .Search }}" />
 		</div>
 		<div class="imagelist">
-			{{ if . }}
-				{{ range . }}
+			{{ if .Images }}
+				{{ range .Images }}
 					<span class="thumb">
 						<a href="/images/show/{{.}}">
-							<img src="/static/images/{{.}}" />
+							<img style="max-width: 100%; max-height: 100%;" src="/static/images/{{.}}" />
 						</a>
 					</span>
 				{{ end }}
@@ -86,19 +87,16 @@ func parseTags(tagQuery string) (include, exclude []string) {
 
 // imageSearchHandler is the handler for the /images route. If
 func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	// if no tags are supplied, return the default set of images
-	var urls []string
-	var err error
-	if tags := req.FormValue("t"); tags == "" {
-		urls, err = db.defaultLookup()
-	} else {
-		urls, err = db.lookupByTags(parseTags(tags))
-	}
+	searchTags := req.FormValue("t")
+	urls, err := db.lookupByTags(parseTags(searchTags))
 	if err != nil {
 		http.Error(w, "Lookup failed", http.StatusInternalServerError)
 		return
 	}
-	searchImageTemplate.Execute(w, urls)
+	searchImageTemplate.Execute(w, struct {
+		Search string
+		Images []string
+	}{searchTags, urls})
 }
 
 func imageShowHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {

@@ -13,7 +13,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params)
 
 func main() {
 	// open image DB
-	imgDB := &imageDB{}
+	imgDB := newImageDB()
 
 	router := httprouter.New()
 	router.GET("/", indexHandler)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"strings"
 )
 
 var (
@@ -47,20 +48,20 @@ func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags,
 
 // defaultLookup returns the most recently added images.
 func (db *imageDB) defaultLookup() ([]string, error) {
-	return []string{
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
-	}, nil
+	var urls []string
+	for _, entry := range db.images {
+		urls = append(urls, entry.URL)
+	}
+	return urls, nil
 }
 
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
 func (db *imageDB) lookupByTags(include, exclude []string) ([]string, error) {
-	//assert(len(include) > 0)
+	// if no tags are supplied, return the default set of images
+	if len(include) == 0 && len(exclude) == 0 {
+		return db.defaultLookup()
+	}
 
 	// Get initial set by querying a single tag. Then, of these, filter out
 	// those that do not contain all of include and none of exclude.
@@ -109,8 +110,19 @@ func (db *imageDB) addTags(url string, tags []string) error {
 }
 
 func newImageDB() *imageDB {
-	return &imageDB{
+	db := &imageDB{
 		tags:   make(map[string]tagEntry),
 		images: make(map[string]imageEntry),
 	}
+	images := []struct {
+		url, tags string
+	}{
+		{"1454884063638.jpg", "marco_rubio sweat dispel foo"},
+		{"1452823200602.jpg", "donald_trump maga vaporwave foo"},
+		{"1451626871873.png", "bernie_sanders blm cuck wojack"},
+	}
+	for _, img := range images {
+		db.addImage(img.url, strings.Split(img.tags, " "))
+	}
+	return db
 }
