@@ -1,9 +1,21 @@
 span.thumb {
+	background: #eee;
+	border: 2px solid transparent;
 	display: inline-block;
 	height: 180px;
+	margin: 5px 5px 5px 5px;
+	padding: 3px;
 	text-align: center;
-	vertical-align: middle;
+	vertical-align: top;
 	width: 170px;
+}
+span.thumb:hover {
+	border: 2px solid #aaa;
+}
+img.preview {
+	max-height: 100%;
+	max-width: 100%;
+	vertical-align: center;
 }
 
 header, footer {

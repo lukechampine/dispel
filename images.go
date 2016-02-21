@@ -27,11 +27,11 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 		<div class="imagelist">
 			{{ if .Images }}
 				{{ range .Images }}
-					<span class="thumb">
-						<a href="/images/show/{{.}}">
-							<img style="max-width: 100%; max-height: 100%;" src="/static/images/{{.}}" />
-						</a>
-					</span>
+					<a href="/images/show/{{.}}">
+						<span class="thumb">
+							<img class="preview" src="/static/images/{{.}}" />
+						</span>
+					</a>
 				{{ end }}
 			{{ else }}
 				<span>No results!</span><br/><br/>
