@@ -109,15 +109,8 @@ func newImageDB() *imageDB {
 		tags:   make(map[string]tagEntry),
 		images: make(map[string]imageEntry),
 	}
-	images := []struct {
-		url, tags string
-	}{
-		{"1454884063638.jpg", "marco_rubio sweat dispel foo"},
-		{"1452823200602.jpg", "donald_trump maga vaporwave foo"},
-		{"1451626871873.png", "bernie_sanders blm cuck wojack"},
-	}
-	for _, img := range images {
-		db.addImage(img.url, strings.Split(img.tags, " "))
+	for _, img := range dbData {
+		db.addImage(img.Name, strings.Split(img.Tags, " "))
 	}
 	return db
 }
