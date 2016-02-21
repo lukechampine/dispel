@@ -71,14 +71,14 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 `))
 
 func parseTags(tagQuery string) (include, exclude []string) {
-	for _, tag := range strings.Split(tagQuery, "+") {
+	for _, tag := range strings.Split(tagQuery, " ") {
 		if strings.TrimPrefix(tag, "-") == "" {
 			continue
 		}
 		if strings.HasPrefix(tag, "-") {
-			exclude = append(exclude, string(tag[1:]))
+			exclude = append(exclude, tag[1:])
 		} else {
-			include = append(include, string(tag))
+			include = append(include, tag)
 		}
 	}
 	return

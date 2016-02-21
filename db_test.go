@@ -76,12 +76,12 @@ func TestParseTags(t *testing.T) {
 	}{
 		{"", nil, nil},
 		{"-", nil, nil},
-		{"-+--++---+++", nil, nil},
+		{"- --  ---   ", nil, []string{"-", "--"}},
 		{"foo", []string{"foo"}, nil},
-		{"+foo", []string{"foo"}, nil},
-		{"foo+-", []string{"foo"}, nil},
-		{"foo+bar", []string{"foo", "bar"}, nil},
-		{"foo+-bar", []string{"foo"}, []string{"bar"}},
+		{" foo", []string{"foo"}, nil},
+		{"foo -", []string{"foo"}, nil},
+		{"foo bar", []string{"foo", "bar"}, nil},
+		{"foo -bar", []string{"foo"}, []string{"bar"}},
 		{"-bar", nil, []string{"bar"}},
 	}
 	for _, test := range tests {
