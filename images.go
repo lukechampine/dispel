@@ -27,9 +27,9 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 		<div class="imagelist">
 			{{ if .Images }}
 				{{ range .Images }}
-					<a href="/images/show/{{.}}">
+					<a href="/images/show/{{ .Hash }}">
 						<span class="thumb">
-							<img class="preview" src="/static/images/{{.}}" />
+							<img class="preview" src="/static/thumbnails/{{ .Hash }}.jpg" />
 						</span>
 					</a>
 				{{ end }}
@@ -61,7 +61,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 				Sidebar
 			</div>
 			<div class="content">
-				<img style="max-width: 100%;" src="/static/images/{{.}}" />
+				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}.{{ .Ext }}" />
 			</div>
 		</div>
 		<footer>
@@ -95,11 +95,15 @@ func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, 
 	}
 	searchImageTemplate.Execute(w, struct {
 		Search string
-		Images []string
+		Images []imageEntry
 	}{searchTags, urls})
 }
 
-func imageShowHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// TODO: look up img
-	showImageTemplate.Execute(w, ps.ByName("img"))
+func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	entry, ok := db.images[ps.ByName("img")]
+	if !ok {
+		http.NotFound(w, req)
+		return
+	}
+	showImageTemplate.Execute(w, entry)
 }

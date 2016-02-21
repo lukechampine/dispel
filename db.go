@@ -17,7 +17,8 @@ type (
 	}
 
 	imageEntry struct {
-		URL  string
+		Hash string
+		Ext  string
 		Tags map[string]struct{}
 	}
 
@@ -48,12 +49,12 @@ func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags,
 
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
-func (db *imageDB) lookupByTags(include, exclude []string) (urls []string, err error) {
+func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, err error) {
 	// if no include tags are supplied, filter the entire database
 	if len(include) == 0 {
 		for _, entry := range db.images {
 			if entry.missingTags(exclude) {
-				urls = append(urls, entry.URL)
+				imgs = append(imgs, entry)
 			}
 		}
 		return
@@ -64,28 +65,29 @@ func (db *imageDB) lookupByTags(include, exclude []string) (urls []string, err e
 	for url := range db.tags[include[0]].Images {
 		entry := db.images[url]
 		if entry.hasTags(include) && entry.missingTags(exclude) {
-			urls = append(urls, entry.URL)
+			imgs = append(imgs, entry)
 		}
 	}
 	return
 }
 
 // addImage adds an image and its tags to the database.
-func (db *imageDB) addImage(url string, tags []string) error {
-	if _, ok := db.images[url]; ok {
+func (db *imageDB) addImage(hash, ext string, tags []string) error {
+	if _, ok := db.images[hash]; ok {
 		return errImageExists
 	}
 	// create imageEntry without any tags, then call addTags
-	db.images[url] = imageEntry{
-		URL:  url,
+	db.images[hash] = imageEntry{
+		Hash: hash,
+		Ext:  ext,
 		Tags: make(map[string]struct{}),
 	}
-	return db.addTags(url, tags)
+	return db.addTags(hash, tags)
 }
 
 // addTags adds a set of tags to an image.
-func (db *imageDB) addTags(url string, tags []string) error {
-	if _, ok := db.images[url]; !ok {
+func (db *imageDB) addTags(hash string, tags []string) error {
+	if _, ok := db.images[hash]; !ok {
 		return errImageNotExists
 	}
 	for _, tag := range tags {
@@ -97,9 +99,9 @@ func (db *imageDB) addTags(url string, tags []string) error {
 			}
 		}
 		// add tag to image
-		db.images[url].Tags[tag] = struct{}{}
+		db.images[hash].Tags[tag] = struct{}{}
 		// add image to tag
-		db.tags[tag].Images[url] = struct{}{}
+		db.tags[tag].Images[hash] = struct{}{}
 	}
 	return nil
 }
@@ -110,7 +112,7 @@ func newImageDB() *imageDB {
 		images: make(map[string]imageEntry),
 	}
 	for _, img := range dbData {
-		db.addImage(img.Name, strings.Split(img.Tags, " "))
+		db.addImage(img.Hash, img.Ext, strings.Split(img.Tags, " "))
 	}
 	return db
 }

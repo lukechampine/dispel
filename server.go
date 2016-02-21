@@ -18,7 +18,7 @@ func main() {
 	router := httprouter.New()
 	router.GET("/", indexHandler)
 	router.GET("/images", imgDB.imageSearchHandler)
-	router.GET("/images/show/:img", imageShowHandler)
+	router.GET("/images/show/:img", imgDB.imageShowHandler)
 
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
