@@ -46,33 +46,28 @@ func (ie imageEntry) hasTags(tags []string) bool { return ie.checkTags(tags, tru
 // missingTags returns true if the imageEntry contains none of the specified tags.
 func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags, false) }
 
-// defaultLookup returns the most recently added images.
-func (db *imageDB) defaultLookup() ([]string, error) {
-	var urls []string
-	for _, entry := range db.images {
-		urls = append(urls, entry.URL)
-	}
-	return urls, nil
-}
-
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
-func (db *imageDB) lookupByTags(include, exclude []string) ([]string, error) {
-	// if no tags are supplied, return the default set of images
-	if len(include) == 0 && len(exclude) == 0 {
-		return db.defaultLookup()
+func (db *imageDB) lookupByTags(include, exclude []string) (urls []string, err error) {
+	// if no include tags are supplied, filter the entire database
+	if len(include) == 0 {
+		for _, entry := range db.images {
+			if entry.missingTags(exclude) {
+				urls = append(urls, entry.URL)
+			}
+		}
+		return
 	}
 
 	// Get initial set by querying a single tag. Then, of these, filter out
 	// those that do not contain all of include and none of exclude.
-	var urls []string
 	for url := range db.tags[include[0]].Images {
 		entry := db.images[url]
 		if entry.hasTags(include) && entry.missingTags(exclude) {
 			urls = append(urls, entry.URL)
 		}
 	}
-	return urls, nil
+	return
 }
 
 // addImage adds an image and its tags to the database.
