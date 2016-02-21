@@ -1,12 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
-	"strings"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 var (
@@ -49,6 +44,18 @@ func (ie imageEntry) hasTags(tags []string) bool { return ie.checkTags(tags, tru
 
 // missingTags returns true if the imageEntry contains none of the specified tags.
 func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags, false) }
+
+// defaultLookup returns the most recently added images.
+func (db *imageDB) defaultLookup() ([]string, error) {
+	return []string{
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+		"tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg", "tidus.jpg",
+	}, nil
+}
 
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
@@ -99,39 +106,6 @@ func (db *imageDB) addTags(url string, tags []string) error {
 		db.tags[tag].Images[url] = struct{}{}
 	}
 	return nil
-}
-
-func parseTags(tagQuery string) (include, exclude []string) {
-	for _, tag := range strings.Split(tagQuery, "+") {
-		if strings.TrimPrefix(tag, "-") == "" {
-			continue
-		}
-		if strings.HasPrefix(tag, "-") {
-			exclude = append(exclude, string(tag[1:]))
-		} else {
-			include = append(include, string(tag))
-		}
-	}
-	return
-}
-
-// searchHandler returns the images matching the tags specified in the query.
-func (db *imageDB) searchHandler(w http.ResponseWriter, tags string) {
-	include, exclude := parseTags(tags)
-	urls, err := db.lookupByTags(include, exclude)
-	if err != nil {
-		http.Error(w, "Lookup failed", http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(urls)
-}
-
-func (db *imageDB) indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	if req.FormValue("t") == "" {
-		http.ServeFile(w, req, "./static/images.html")
-	} else {
-		db.searchHandler(w, req.FormValue("t"))
-	}
 }
 
 func newImageDB() *imageDB {

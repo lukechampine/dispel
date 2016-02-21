@@ -1,6 +1,5 @@
 span.thumb {
 	display: inline-block;
-	float: left;
 	height: 180px;
 	text-align: center;
 	vertical-align: middle;
@@ -14,6 +13,10 @@ header, footer {
 	display: block;
 	margin: 0 1.5% 24px 1.5%;
 	padding: 24px 15px;
+	text-align: center;
+}
+
+.imagelist {
 	text-align: center;
 }
 

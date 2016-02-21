@@ -13,11 +13,11 @@ func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params)
 
 func main() {
 	// open image DB
-	//imgDB := &imageDB{}
+	imgDB := &imageDB{}
 
 	router := httprouter.New()
 	router.GET("/", indexHandler)
-	router.GET("/images", imageSearchHandler)
+	router.GET("/images", imgDB.imageSearchHandler)
 	router.GET("/images/show/:img", imageShowHandler)
 
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
