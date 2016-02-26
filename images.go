@@ -25,14 +25,12 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 			<input id="searchbar" type="search" placeholder="yeb guac" value="{{ .Search }}" />
 		</div>
 		<div class="imagelist">
-			{{ if .Images }}
-				{{ range .Images }}
-					<a href="/images/show/{{ .Hash }}">
-						<span class="thumb">
-							<img class="preview" src="/static/thumbnails/{{ .Hash }}.jpg" />
-						</span>
-					</a>
-				{{ end }}
+			{{ range .Images }}
+				<a href="/images/show/{{ .Hash }}">
+					<span class="thumb">
+						<img class="preview" src="/static/thumbnails/{{ .Hash }}.jpg" />
+					</span>
+				</a>
 			{{ else }}
 				<span>No results!</span><br/><br/>
 			{{ end }}
@@ -48,7 +46,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Dispel - {{.}}</title>
+		<title>Dispel - {{ .Hash }}.{{ .Ext }}</title>
 		<link rel="stylesheet" href="/static/css/milligram.min.css">
 		<link rel="stylesheet" href="/static/css/images.css">
 	</head>
@@ -58,7 +56,11 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 		</header>
 		<div class="flex">
 			<div class="sidebar">
-				Sidebar
+				{{ range $tag, $element := .Tags }}
+					<div>
+						<a href="/images?t={{ $tag }}">{{ $tag }}</a>
+					</div>
+				{{ end }}
 			</div>
 			<div class="content">
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}.{{ .Ext }}" />
@@ -92,6 +94,10 @@ func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, 
 	if err != nil {
 		http.Error(w, "Lookup failed", http.StatusInternalServerError)
 		return
+	}
+	// for now, limit to 100 images
+	if len(urls) > 100 {
+		urls = urls[:100]
 	}
 	searchImageTemplate.Execute(w, struct {
 		Search string
