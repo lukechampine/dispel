@@ -18,8 +18,6 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	//imgDB := oldImageDB()
-	imgDB.save()
 
 	router := httprouter.New()
 	router.GET("/", indexHandler)
