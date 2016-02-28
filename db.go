@@ -18,9 +18,10 @@ type (
 	}
 
 	imageEntry struct {
-		Hash string
-		Ext  string
-		Tags map[string]struct{}
+		Hash      string
+		Ext       string
+		DateAdded string
+		Tags      map[string]struct{}
 	}
 
 	// imageDB is a tagged image database.
@@ -50,10 +51,11 @@ func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags,
 
 func (ie imageEntry) MarshalJSON() ([]byte, error) {
 	data := struct {
-		Hash string
-		Ext  string
-		Tags []string
-	}{ie.Hash, ie.Ext, nil}
+		Hash      string
+		Ext       string
+		DateAdded string
+		Tags      []string
+	}{ie.Hash, ie.Ext, ie.DateAdded, nil}
 	for t := range ie.Tags {
 		data.Tags = append(data.Tags, t)
 	}
@@ -62,12 +64,13 @@ func (ie imageEntry) MarshalJSON() ([]byte, error) {
 
 func (ie *imageEntry) UnmarshalJSON(b []byte) error {
 	var data struct {
-		Hash string
-		Ext  string
-		Tags []string
+		Hash      string
+		Ext       string
+		DateAdded string
+		Tags      []string
 	}
 	err := json.Unmarshal(b, &data)
-	ie.Hash, ie.Ext = data.Hash, data.Ext
+	ie.Hash, ie.Ext, ie.DateAdded = data.Hash, data.Ext, data.DateAdded
 	ie.Tags = make(map[string]struct{})
 	for _, t := range data.Tags {
 		ie.Tags[t] = struct{}{}
@@ -125,15 +128,16 @@ func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, e
 }
 
 // addImage adds an image and its tags to the database.
-func (db *imageDB) addImage(hash, ext string, tags []string) error {
+func (db *imageDB) addImage(hash, ext, date string, tags []string) error {
 	if _, ok := db.Images[hash]; ok {
 		return errImageExists
 	}
 	// create imageEntry without any tags, then call addTags
 	db.Images[hash] = imageEntry{
-		Hash: hash,
-		Ext:  ext,
-		Tags: make(map[string]struct{}),
+		Hash:      hash,
+		Ext:       ext,
+		DateAdded: date,
+		Tags:      make(map[string]struct{}),
 	}
 	return db.addTags(hash, tags)
 }

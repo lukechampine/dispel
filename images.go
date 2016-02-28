@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -203,7 +204,8 @@ func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Reque
 	// TODO: create thumbnail
 
 	// add image to database
-	err = db.addImage(hash, ext, tags)
+	date := time.Now().Format("Mon Jan 02 15:04:05 EST 2006")
+	err = db.addImage(hash, ext, date, tags)
 	if err == errImageExists {
 		// not really the correct way to use this status code...
 		http.Redirect(w, req, "/images/show/"+hash, http.StatusSeeOther)
