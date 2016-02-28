@@ -145,7 +145,7 @@ func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, 
 }
 
 func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	entry, ok := db.images[ps.ByName("img")]
+	entry, ok := db.Images[ps.ByName("img")]
 	if !ok {
 		http.NotFound(w, req)
 		return

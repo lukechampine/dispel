@@ -1,8 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
-	"strings"
+	"os"
 )
 
 var (
@@ -25,8 +26,8 @@ type (
 	// imageDB is a tagged image database.
 	// eventually a true db, for now all in-memory
 	imageDB struct {
-		tags   map[string]tagEntry
-		images map[string]imageEntry
+		Tags   map[string]tagEntry
+		Images map[string]imageEntry
 	}
 )
 
@@ -47,12 +48,64 @@ func (ie imageEntry) hasTags(tags []string) bool { return ie.checkTags(tags, tru
 // missingTags returns true if the imageEntry contains none of the specified tags.
 func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags, false) }
 
+func (ie imageEntry) MarshalJSON() ([]byte, error) {
+	data := struct {
+		Hash string
+		Ext  string
+		Tags []string
+	}{ie.Hash, ie.Ext, nil}
+	for t := range ie.Tags {
+		data.Tags = append(data.Tags, t)
+	}
+	return json.Marshal(data)
+}
+
+func (ie *imageEntry) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Hash string
+		Ext  string
+		Tags []string
+	}
+	err := json.Unmarshal(b, &data)
+	ie.Hash, ie.Ext = data.Hash, data.Ext
+	ie.Tags = make(map[string]struct{})
+	for _, t := range data.Tags {
+		ie.Tags[t] = struct{}{}
+	}
+	return err
+}
+
+func (te tagEntry) MarshalJSON() ([]byte, error) {
+	data := struct {
+		Name   string
+		Images []string
+	}{te.Name, nil}
+	for img := range te.Images {
+		data.Images = append(data.Images, img)
+	}
+	return json.Marshal(data)
+}
+
+func (te *tagEntry) UnmarshalJSON(b []byte) error {
+	var data struct {
+		Name   string
+		Images []string
+	}
+	err := json.Unmarshal(b, &data)
+	te.Name = data.Name
+	te.Images = make(map[string]struct{})
+	for _, img := range data.Images {
+		te.Images[img] = struct{}{}
+	}
+	return err
+}
+
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
 func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, err error) {
 	// if no include tags are supplied, filter the entire database
 	if len(include) == 0 {
-		for _, entry := range db.images {
+		for _, entry := range db.Images {
 			if entry.missingTags(exclude) {
 				imgs = append(imgs, entry)
 			}
@@ -62,8 +115,8 @@ func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, e
 
 	// Get initial set by querying a single tag. Then, of these, filter out
 	// those that do not contain all of include and none of exclude.
-	for url := range db.tags[include[0]].Images {
-		entry := db.images[url]
+	for url := range db.Tags[include[0]].Images {
+		entry := db.Images[url]
 		if entry.hasTags(include) && entry.missingTags(exclude) {
 			imgs = append(imgs, entry)
 		}
@@ -73,11 +126,11 @@ func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, e
 
 // addImage adds an image and its tags to the database.
 func (db *imageDB) addImage(hash, ext string, tags []string) error {
-	if _, ok := db.images[hash]; ok {
+	if _, ok := db.Images[hash]; ok {
 		return errImageExists
 	}
 	// create imageEntry without any tags, then call addTags
-	db.images[hash] = imageEntry{
+	db.Images[hash] = imageEntry{
 		Hash: hash,
 		Ext:  ext,
 		Tags: make(map[string]struct{}),
@@ -87,32 +140,48 @@ func (db *imageDB) addImage(hash, ext string, tags []string) error {
 
 // addTags adds a set of tags to an image.
 func (db *imageDB) addTags(hash string, tags []string) error {
-	if _, ok := db.images[hash]; !ok {
+	if _, ok := db.Images[hash]; !ok {
 		return errImageNotExists
 	}
 	for _, tag := range tags {
 		// create tag if it does not already exist
-		if _, ok := db.tags[tag]; !ok {
-			db.tags[tag] = tagEntry{
+		if _, ok := db.Tags[tag]; !ok {
+			db.Tags[tag] = tagEntry{
 				Name:   tag,
 				Images: make(map[string]struct{}),
 			}
 		}
 		// add tag to image
-		db.images[hash].Tags[tag] = struct{}{}
+		db.Images[hash].Tags[tag] = struct{}{}
 		// add image to tag
-		db.tags[tag].Images[hash] = struct{}{}
+		db.Tags[tag].Images[hash] = struct{}{}
 	}
 	return nil
 }
 
-func newImageDB() *imageDB {
+func (db *imageDB) save() error {
+	f, err := os.Create("imagedb.json")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	b, _ := json.MarshalIndent(db, "", "\t")
+	f.Write(b)
+	return nil
+	//return json.NewEncoder(f).Encode(db)
+}
+
+func newImageDB(dbpath string) (*imageDB, error) {
+	f, err := os.Open(dbpath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
 	db := &imageDB{
-		tags:   make(map[string]tagEntry),
-		images: make(map[string]imageEntry),
+		Tags:   make(map[string]tagEntry),
+		Images: make(map[string]imageEntry),
 	}
-	for _, img := range dbData {
-		db.addImage(img.Hash, img.Ext, strings.Split(img.Tags, " "))
-	}
-	return db
+	err = json.NewDecoder(f).Decode(&db)
+	return db, err
 }

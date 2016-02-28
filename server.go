@@ -13,7 +13,13 @@ func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params)
 
 func main() {
 	// open image DB
-	imgDB := newImageDB()
+	imgDB, err := newImageDB("imagedb.json")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	//imgDB := oldImageDB()
+	imgDB.save()
 
 	router := httprouter.New()
 	router.GET("/", indexHandler)
