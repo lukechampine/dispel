@@ -61,6 +61,9 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 						<a href="/images?t={{ $tag }}">{{ $tag }}</a>
 					</div>
 				{{ end }}
+				<div>
+					<a href="/images/delete/{{ .Hash }}">Delete</a>
+				</div>
 			</div>
 			<div class="content">
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
@@ -148,4 +151,13 @@ func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps
 
 func (db *imageDB) imageUploadHandlerGET(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	uploadImageTemplate.Execute(w, nil)
+}
+
+func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	err := db.removeImage(ps.ByName("img"))
+	if err != nil {
+		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, req, "/images", http.StatusMovedPermanently)
 }

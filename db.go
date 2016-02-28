@@ -163,6 +163,29 @@ func (db *imageDB) addTags(hash string, tags []string) error {
 	return nil
 }
 
+// removeImage deletes an image from the database. If a tag only applied to
+// that image, the tag is also deleted.
+func (db *imageDB) removeImage(hash string) error {
+	img, ok := db.Images[hash]
+	if !ok {
+		return errImageNotExists
+	}
+	// delete tags
+	for t := range img.Tags {
+		tag, ok := db.Tags[t]
+		if !ok {
+			continue
+		}
+		delete(tag.Images, hash)
+		if len(tag.Images) == 0 {
+			delete(db.Tags, t)
+		}
+	}
+	// delete image entry
+	delete(db.Images, hash)
+	return nil
+}
+
 func (db *imageDB) save() error {
 	f, err := os.Create("imagedb.json")
 	if err != nil {
