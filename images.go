@@ -76,38 +76,6 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 </html>
 `))
 
-var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Dispel - Upload Image</title>
-		<link rel="stylesheet" href="/static/css/milligram.min.css">
-		<link rel="stylesheet" href="/static/css/images.css">
-	</head>
-	<body>
-		<header>
-			Header
-		</header>
-		<div class="add-image">
-			<form enctype="multipart/form-data" action="/images/upload" method="post">
-				<div>
-					<input type="file" name="image">
-				</div>
-				<div>
-					<input type="text" name="tags">
-				</div>
-				<div>
-					<input type="submit" value="Upload Image" name="submit">
-				</div>
-			</form>
-		</div>
-		<footer>
-			Footer
-		</footer>
-	</body>
-</html>
-`))
-
 func parseTags(tagQuery string) (include, exclude []string) {
 	for _, tag := range strings.Split(tagQuery, " ") {
 		if strings.TrimPrefix(tag, "-") == "" {
@@ -149,15 +117,12 @@ func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps
 	showImageTemplate.Execute(w, entry)
 }
 
-func (db *imageDB) imageUploadHandlerGET(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	uploadImageTemplate.Execute(w, nil)
-}
-
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	err := db.removeImage(ps.ByName("img"))
 	if err != nil {
 		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// TODO: delete image and thumbnail
 	http.Redirect(w, req, "/images", http.StatusMovedPermanently)
 }

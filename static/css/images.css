@@ -56,3 +56,19 @@ header, footer {
 	padding: 24px 15px;
 	text-align: center;
 }
+
+.upload-form {
+	min-width: 16em;
+	padding: 24px 15px;
+	text-align: center;
+}
+
+.upload-preview {
+	background: #2db34a;
+	border-radius: 6px;
+	flex: 1;
+	margin: 0 1.5% 24px 1.5%;
+	overflow: auto;
+	padding: 24px 15px;
+	text-align: center;
+}
