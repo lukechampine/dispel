@@ -163,6 +163,19 @@ func (db *imageDB) addTags(hash string, tags []string) error {
 	return nil
 }
 
+// setTags sets of the tags of an existing image.
+func (db *imageDB) setTags(hash string, tags []string) error {
+	img, ok := db.Images[hash]
+	if !ok {
+		return errImageNotExists
+	}
+	err := db.removeImage(img.Hash)
+	if err != nil {
+		return err
+	}
+	return db.addImage(img.Hash, img.Ext, img.DateAdded, tags)
+}
+
 // removeImage deletes an image from the database. If a tag only applied to
 // that image, the tag is also deleted.
 func (db *imageDB) removeImage(hash string) error {

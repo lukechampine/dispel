@@ -47,7 +47,7 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 						<input type="text" placeholder="Add some tags" name="tags" id="user-tags" />
 					</div>
 					<div>
-						<input type="submit" value="Upload Image" name="submit" />
+						<input type="submit" value="Upload Image" />
 					</div>
 				</form>
 			</div>
@@ -84,7 +84,7 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 </html>
 `))
 
-func (db *imageDB) imageUploadHandlerGET(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (db *imageDB) imageUploadHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	uploadImageTemplate.Execute(w, nil)
 }
 

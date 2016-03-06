@@ -48,13 +48,23 @@ header, footer {
 }
 
 .content {
-	background: #2db34a;
-	border-radius: 6px;
 	flex: 1;
 	margin: 0 1.5% 24px 1.5%;
 	overflow: auto;
+}
+
+.content-img {
+	border-radius: 6px;
+	background: #2db34a;
 	padding: 24px 15px;
 	text-align: center;
+}
+
+.content-edit {
+	border-radius: 6px;
+	background: #2db34a;
+	margin-top: 1.5%;
+	padding: 24px 15px;
 }
 
 .upload-form {

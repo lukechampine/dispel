@@ -22,8 +22,9 @@ func main() {
 	router := httprouter.New()
 	router.GET("/", indexHandler)
 	router.GET("/images", imgDB.imageSearchHandler)
-	router.GET("/images/upload", imgDB.imageUploadHandlerGET)
+	router.GET("/images/upload", imgDB.imageUploadHandler)
 	router.POST("/images/upload", imgDB.imageUploadHandlerPOST)
+	router.POST("/images/update/:img", imgDB.imageUpdateHandlerPOST)
 	router.GET("/images/delete/:img", imgDB.imageDeleteHandler)
 	router.GET("/images/show/:img", imgDB.imageShowHandler)
 

@@ -68,7 +68,16 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 				</div>
 			</div>
 			<div class="content">
-				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
+				<div class="content-img">
+					<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
+				</div>
+				<div class="content-edit">
+					<h5>Edit Tags:</h5>
+					<form action="/images/update/{{ .Hash }}" method="post">
+						<textarea name="tags">{{ range $tag, $element := .Tags }}{{ $tag }} {{ end }}</textarea>
+						<input type="submit" value="Save changes" />
+					</form>
+				</div>
 			</div>
 		</div>
 		<footer>
@@ -117,6 +126,27 @@ func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps
 		return
 	}
 	showImageTemplate.Execute(w, entry)
+}
+
+func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	tags, badTags := parseTags(req.FormValue("tags"))
+	if len(tags) == 0 {
+		http.Error(w, "failed to update image: please supply at least one tag", http.StatusBadRequest)
+		return
+	} else if len(badTags) != 0 {
+		http.Error(w, "failed to update image: tags may not begin with a -", http.StatusBadRequest)
+		return
+	}
+	hash := ps.ByName("img")
+	// remove the image, then re-add it with the new tag set.
+	err := db.setTags(hash, tags)
+	if err != nil {
+		http.Error(w, "Update failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db.save()
+
+	http.Redirect(w, req, "/images/show/"+hash, http.StatusSeeOther)
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
