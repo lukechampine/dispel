@@ -3,6 +3,8 @@ package main
 import (
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
@@ -118,11 +120,16 @@ func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	err := db.removeImage(ps.ByName("img"))
+	entry := db.Images[ps.ByName("img")]
+	err := db.removeImage(entry.Hash)
 	if err != nil {
 		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// TODO: delete image and thumbnail
-	http.Redirect(w, req, "/images", http.StatusMovedPermanently)
+	db.save()
+	// delete image + thumbnail from disk
+	os.Remove(filepath.Join("static", "images", entry.Hash+entry.Ext))
+	os.Remove(filepath.Join("static", "thumbnails", entry.Hash+".jpg"))
+
+	http.Redirect(w, req, "/images", http.StatusSeeOther)
 }
