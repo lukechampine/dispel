@@ -42,7 +42,7 @@ header, footer {
 	border-radius: 6px;
 	color: #fff;
 	margin: 0 1.5% 24px 1.5%;
-	min-width: 16em;
+	width: 16em;
 	padding: 24px 15px;
 	text-align: center;
 }
@@ -58,7 +58,7 @@ header, footer {
 }
 
 .upload-form {
-	min-width: 16em;
+	width: 16em;
 	padding: 24px 15px;
 	text-align: center;
 }

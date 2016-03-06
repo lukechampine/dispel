@@ -38,13 +38,16 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 			<div class="upload-form">
 				<form enctype="multipart/form-data" action="/images/upload" method="post">
 					<div>
-						<input type="file" name="image" id="upload-input">
+						<input type="file" name="image" id="upload-input" style="max-width: 100%;" />
 					</div>
 					<div>
-						<input type="text" name="tags" id="user-tags">
+						<input type="text" placeholder="Or, paste a URL" name="url" id="link-input" />
 					</div>
 					<div>
-						<input type="submit" value="Upload Image" name="submit">
+						<input type="text" placeholder="Add some tags" name="tags" id="user-tags" />
+					</div>
+					<div>
+						<input type="submit" value="Upload Image" name="submit" />
 					</div>
 				</form>
 			</div>
@@ -57,9 +60,11 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 		</footer>
 	</body>
 	<script>
-		document.getElementById("upload-input").onchange = function() {
-			// clear the tags
+		// load a locally-uploaded image
+		document.getElementById("upload-input").onchange = function(g) {
+			// clear the tag + URL fields
 			document.getElementById("user-tags").value = "";
+			document.getElementById("link-input").value = "";
 
 			var reader = new FileReader();
 
@@ -69,6 +74,11 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 
 			// read the image file as a data URL.
 			reader.readAsDataURL(this.files[0]);
+		};
+
+		// load an image from a URL
+		document.getElementById("link-input").onkeyup = function(e) {
+			document.getElementById("preview-img").src = e.target.value;
 		};
 	</script>
 </html>
@@ -89,19 +99,34 @@ func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// simultaneously copy image to disk, calculate md5 hash, and generate thumbnail
-	file, header, err := req.FormFile("image")
-	if err != nil {
-		http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
-		return
+	// image may be local or from URL
+	var file io.ReadCloser
+	var ext string
+	if url := req.FormValue("url"); url != "" {
+		resp, err := http.Get(url)
+		if err != nil {
+			http.Error(w, "failed to retrieve URL: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		file = resp.Body
+		ext = filepath.Ext(url)
+	} else {
+		formFile, header, err := req.FormFile("image")
+		if err != nil {
+			http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		exts, err := mime.ExtensionsByType(header.Header.Get("Content-Type"))
+		if err != nil || len(exts) == 0 {
+			http.Error(w, "failed to read uploaded image data: unrecognized MIME type: "+header.Header.Get("Content-Type"), http.StatusInternalServerError)
+			return
+		}
+		file = formFile
+		ext = exts[0]
 	}
 	defer file.Close()
-	exts, err := mime.ExtensionsByType(header.Header.Get("Content-Type"))
-	if err != nil || len(exts) == 0 {
-		http.Error(w, "failed to read uploaded image data: unrecognized MIME type: "+header.Header.Get("Content-Type"), http.StatusInternalServerError)
-		return
-	}
-	ext := exts[0]
+
+	// simultaneously copy image to disk, calculate md5 hash, and generate thumbnail
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "dispel")
 	if err != nil {
 		http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
