@@ -27,8 +27,9 @@ type (
 	// imageDB is a tagged image database.
 	// eventually a true db, for now all in-memory
 	imageDB struct {
-		Tags   map[string]tagEntry
-		Images map[string]imageEntry
+		Tags    map[string]tagEntry
+		Images  map[string]imageEntry
+		Aliases map[string]string
 	}
 )
 
@@ -106,6 +107,18 @@ func (te *tagEntry) UnmarshalJSON(b []byte) error {
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
 func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, err error) {
+	// expand tag aliases
+	for i, tag := range include {
+		if alias, ok := db.Aliases[tag]; ok {
+			include[i] = alias
+		}
+	}
+	for i, tag := range exclude {
+		if alias, ok := db.Aliases[tag]; ok {
+			exclude[i] = alias
+		}
+	}
+
 	// if no include tags are supplied, filter the entire database
 	if len(include) == 0 {
 		for _, entry := range db.Images {
@@ -148,6 +161,11 @@ func (db *imageDB) addTags(hash string, tags []string) error {
 		return errImageNotExists
 	}
 	for _, tag := range tags {
+		// expand alias, if there is one
+		if alias, ok := db.Aliases[tag]; ok {
+			tag = alias
+		}
+
 		// create tag if it does not already exist
 		if _, ok := db.Tags[tag]; !ok {
 			db.Tags[tag] = tagEntry{
@@ -205,10 +223,12 @@ func (db *imageDB) save() error {
 		return err
 	}
 	defer f.Close()
-	b, _ := json.MarshalIndent(db, "", "\t")
-	f.Write(b)
-	return nil
-	//return json.NewEncoder(f).Encode(db)
+	b, err := json.MarshalIndent(db, "", "\t")
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(b)
+	return err
 }
 
 func newImageDB(dbpath string) (*imageDB, error) {
@@ -219,8 +239,9 @@ func newImageDB(dbpath string) (*imageDB, error) {
 	defer f.Close()
 
 	db := &imageDB{
-		Tags:   make(map[string]tagEntry),
-		Images: make(map[string]imageEntry),
+		Tags:    make(map[string]tagEntry),
+		Images:  make(map[string]imageEntry),
+		Aliases: make(map[string]string),
 	}
 	err = json.NewDecoder(f).Decode(&db)
 	return db, err
