@@ -89,6 +89,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 
 func parseTags(tagQuery string) (include, exclude []string) {
 	for _, tag := range strings.Fields(tagQuery) {
+		tag = strings.ToLower(tag)
 		if strings.TrimPrefix(tag, "-") == "" {
 			continue
 		}
