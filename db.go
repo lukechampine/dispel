@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"sync"
 )
 
 var (
@@ -30,6 +31,8 @@ type (
 		Tags    map[string]tagEntry
 		Images  map[string]imageEntry
 		Aliases map[string]string
+
+		mu sync.RWMutex
 	}
 )
 

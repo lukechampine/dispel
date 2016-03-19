@@ -174,6 +174,8 @@ func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Reque
 	}
 
 	// add image to database
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	date := time.Now().Format("Mon Jan 02 15:04:05 EST 2006")
 	err = db.addImage(hash, ext, date, tags)
 	if err != nil && err != errImageExists {

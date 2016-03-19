@@ -105,7 +105,9 @@ func parseTags(tagQuery string) (include, exclude []string) {
 // imageSearchHandler is the handler for the /images route. If
 func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	searchTags := req.FormValue("t")
+	db.mu.RLock()
 	urls, err := db.lookupByTags(parseTags(searchTags))
+	db.mu.RUnlock()
 	if err != nil {
 		http.Error(w, "Lookup failed", http.StatusInternalServerError)
 		return
@@ -121,7 +123,9 @@ func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, 
 }
 
 func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	db.mu.RLock()
 	entry, ok := db.Images[ps.ByName("img")]
+	db.mu.RUnlock()
 	if !ok {
 		http.NotFound(w, req)
 		return
@@ -140,6 +144,8 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 	}
 	hash := ps.ByName("img")
 	// remove the image, then re-add it with the new tag set.
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	err := db.setTags(hash, tags)
 	if err != nil {
 		http.Error(w, "Update failed: "+err.Error(), http.StatusInternalServerError)
@@ -151,6 +157,8 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	entry := db.Images[ps.ByName("img")]
 	err := db.removeImage(entry.Hash)
 	if err != nil {
