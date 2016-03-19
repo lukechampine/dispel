@@ -31,5 +31,8 @@ func main() {
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
 	log.Println("Listening...")
-	http.ListenAndServe(":3000", router)
+	err = http.ListenAndServe(":3000", router)
+	if err != nil {
+		log.Println(err)
+	}
 }

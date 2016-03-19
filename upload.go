@@ -78,6 +78,10 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 
 		// load an image from a URL
 		document.getElementById("link-input").onkeyup = function(e) {
+			// clear the tag + file fields
+			document.getElementById("user-tags").value = "";
+			document.getElementById("upload-input").value = "";
+
 			document.getElementById("preview-img").src = e.target.value;
 		};
 	</script>
