@@ -235,7 +235,7 @@ func (db *imageDB) save() error {
 }
 
 func newImageDB(dbpath string) (*imageDB, error) {
-	f, err := os.Open(dbpath)
+	f, err := os.OpenFile(dbpath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
