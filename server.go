@@ -12,7 +12,7 @@ import (
 var port = flag.String("port", ":3000", "port the server will listen on")
 
 func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	http.ServeFile(w, req, "static/index.html")
+	http.Redirect(w, req, "/images", http.StatusMovedPermanently)
 }
 
 func main() {
