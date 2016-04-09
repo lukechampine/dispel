@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -8,11 +9,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+var port = flag.String("port", ":3000", "port the server will listen on")
+
 func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	http.ServeFile(w, req, "static/index.html")
 }
 
 func main() {
+	flag.Parse()
+
 	// open image DB
 	imgDB, err := newImageDB("imagedb.json")
 	if err != nil {
@@ -44,7 +49,7 @@ func main() {
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
 	log.Println("Listening...")
-	err = http.ListenAndServe(":3000", router)
+	err = http.ListenAndServe(*port, router)
 	if err != nil {
 		log.Println(err)
 	}
