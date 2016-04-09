@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -14,6 +15,18 @@ func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params)
 func main() {
 	// open image DB
 	imgDB, err := newImageDB("imagedb.json")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// ensure we have image+thumbnail directories
+	err = os.MkdirAll("static/images", 0700)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	err = os.MkdirAll("static/thumbnails", 0700)
 	if err != nil {
 		log.Fatal(err)
 		return
