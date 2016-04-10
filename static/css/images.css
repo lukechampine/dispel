@@ -21,11 +21,9 @@ img.preview {
 header, footer {
 	background: #eee;
 	border-radius: 6px;
-	color: #fff;
 	display: block;
 	margin: 0 1.5% 24px 1.5%;
 	padding: 24px 15px;
-	text-align: center;
 }
 
 .imagelist {

@@ -31,7 +31,9 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 		<link rel="stylesheet" href="/static/css/images.css">
 	</head>
 	<body>
-		<header></header>
+		<header>
+			<a href="/images">Dispel</a>
+		</header>
 		<div class="flex">
 			<div class="upload-form">
 				<form enctype="multipart/form-data" action="/images/upload" method="post">
