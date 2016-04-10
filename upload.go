@@ -31,9 +31,7 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 		<link rel="stylesheet" href="/static/css/images.css">
 	</head>
 	<body>
-		<header>
-			Header
-		</header>
+		<header></header>
 		<div class="flex">
 			<div class="upload-form">
 				<form enctype="multipart/form-data" action="/images/upload" method="post">
@@ -55,9 +53,7 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 				<img id="preview-img" style="max-width: 100%;" />
 			</div>
 		</div>
-		<footer>
-			Footer
-		</footer>
+		<footer></footer>
 	</body>
 	<script>
 		// load a locally-uploaded image

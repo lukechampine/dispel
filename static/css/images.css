@@ -19,7 +19,7 @@ img.preview {
 }
 
 header, footer {
-	background: #2db34a;
+	background: #eee;
 	border-radius: 6px;
 	color: #fff;
 	display: block;
@@ -38,7 +38,7 @@ header, footer {
 }
 
 .sidebar {
-	background: #2db34a;
+	background: #eee;
 	border-radius: 6px;
 	color: #fff;
 	margin: 0 1.5% 24px 1.5%;
@@ -54,15 +54,15 @@ header, footer {
 }
 
 .content-img {
+	background: #eee;
 	border-radius: 6px;
-	background: #2db34a;
 	padding: 24px 15px;
 	text-align: center;
 }
 
 .content-edit {
+	background: #eee;
 	border-radius: 6px;
-	background: #2db34a;
 	margin-top: 1.5%;
 	padding: 24px 15px;
 }
@@ -74,7 +74,7 @@ header, footer {
 }
 
 .upload-preview {
-	background: #2db34a;
+	background: #eee;
 	border-radius: 6px;
 	flex: 1;
 	margin: 0 1.5% 24px 1.5%;

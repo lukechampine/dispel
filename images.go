@@ -20,9 +20,7 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 		<script src="/static/js/images.js"></script>
 	</head>
 	<body>
-		<header>
-			Header
-		</header>
+		<header></header>
 		<div style="margin: 0 1.5% 24px 1.5%;">
 			<input id="searchbar" type="search" placeholder="yeb guac" value="{{ .Search }}" />
 		</div>
@@ -37,9 +35,7 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 				<span>No results!</span><br/><br/>
 			{{ end }}
 		</div>
-		<footer>
-			Footer
-		</footer>
+		<footer></footer>
 	</body>
 </html>
 `))
@@ -53,9 +49,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 		<link rel="stylesheet" href="/static/css/images.css">
 	</head>
 	<body>
-		<header>
-			Header
-		</header>
+		<header></header>
 		<div class="flex">
 			<div class="sidebar">
 				{{ range $tag, $element := .Tags }}
@@ -80,9 +74,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 				</div>
 			</div>
 		</div>
-		<footer>
-			Footer
-		</footer>
+		<footer></footer>
 	</body>
 </html>
 `))
