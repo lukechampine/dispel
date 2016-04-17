@@ -1,25 +1,13 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"image"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
-	"os"
 	"path/filepath"
 	"text/template"
-	"time"
-
-	// register these image formats
-	_ "image/gif"
-	"image/jpeg" // need full import, since we write jpeg thumbnails
-	_ "image/png"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/nfnt/resize"
 )
 
 var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
@@ -128,61 +116,12 @@ func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Reque
 	}
 	defer file.Close()
 
-	// simultaneously copy image to disk, calculate md5 hash, and generate thumbnail
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "dispel")
+	// add to database
+	hash, err := db.Upload(file, tags, ext)
 	if err != nil {
 		http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer tmpFile.Close()
-	hasher := md5.New()
-	img, _, err := image.Decode(
-		io.TeeReader(
-			file, // decode file data
-			io.MultiWriter(
-				tmpFile, // also write to disk
-				hasher,  // also write to hasher
-			),
-		),
-	)
-	if err != nil {
-		http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	hash := hex.EncodeToString(hasher.Sum(nil))
-	err = os.Rename(tmpFile.Name(), filepath.Join("static", "images", hash+ext))
-	if err != nil {
-		http.Error(w, "failed to read uploaded image data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// create thumbnail
-	thumbFile, err := os.Create(filepath.Join("static", "thumbnails", hash+".jpg"))
-	if err != nil {
-		http.Error(w, "failed to generate thumbnail: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer thumbFile.Close()
-	thumb := resize.Thumbnail(150, 150, img, resize.MitchellNetravali)
-	err = jpeg.Encode(thumbFile, thumb, nil)
-	if err != nil {
-		http.Error(w, "failed to generate thumbnail: "+err.Error(), http.StatusInternalServerError)
-		os.Remove(filepath.Join("static", "thumbnails", hash+".jpg"))
-		return
-	}
-
-	// add image to database
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	date := time.Now().Format("Mon Jan 02 15:04:05 EST 2006")
-	err = db.addImage(hash, ext, date, tags)
-	if err != nil && err != errImageExists {
-		http.Error(w, "failed to add image: "+err.Error(), http.StatusInternalServerError)
-		os.Remove(filepath.Join("static", "images", hash+ext))
-		os.Remove(filepath.Join("static", "thumbnails", hash+".jpg"))
-		return
-	}
-	db.save()
 
 	http.Redirect(w, req, "/images/show/"+hash, http.StatusSeeOther)
 }

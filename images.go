@@ -3,8 +3,6 @@ package main
 import (
 	"html/template"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
@@ -139,32 +137,21 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	hash := ps.ByName("img")
-	// remove the image, then re-add it with the new tag set.
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	err := db.setTags(hash, tags)
+	err := db.SetTags(hash, tags)
 	if err != nil {
 		http.Error(w, "Update failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	db.save()
 
 	http.Redirect(w, req, "/images/show/"+hash, http.StatusSeeOther)
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	entry := db.Images[ps.ByName("img")]
-	err := db.removeImage(entry.Hash)
+	err := db.Delete(ps.ByName("img"))
 	if err != nil {
 		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	db.save()
-	// delete image + thumbnail from disk
-	os.Remove(filepath.Join("static", "images", entry.Hash+entry.Ext))
-	os.Remove(filepath.Join("static", "thumbnails", entry.Hash+".jpg"))
 
 	http.Redirect(w, req, "/images", http.StatusSeeOther)
 }
