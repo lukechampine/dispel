@@ -97,23 +97,17 @@ func (db *imageDB) QueueUpload(r io.Reader, tags []string, ext string) error {
 		return err
 	}
 
-	// contruct entry
-	entry := imageEntry{
-		Hash:      hash,
-		Ext:       ext,
-		DateAdded: currentTime(),
-		Tags:      make(stringSet),
-	}
-	for _, t := range tags {
-		entry.Tags[t] = struct{}{}
-	}
-
 	// add image to queue
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.Queue = append(db.Queue, queueItem{
-		Action:     actionUpload,
-		imageEntry: entry,
+		Action: actionUpload,
+		imageEntry: imageEntry{
+			Hash:      hash,
+			Ext:       ext,
+			DateAdded: currentTime(),
+			Tags:      toStringSet(tags),
+		},
 	})
 	return db.save()
 }

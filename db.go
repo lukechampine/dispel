@@ -132,18 +132,27 @@ func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, e
 	return
 }
 
+func (db *imageDB) expandAliases(tags stringSet) stringSet {
+	post := make(stringSet)
+	for tag := range tags {
+		// expand alias, if there is one
+		if alias, ok := db.Aliases[tag]; ok {
+			tag = alias
+		}
+		post[tag] = struct{}{}
+	}
+	return post
+}
+
 // addImage adds an image and its tags to the database.
 func (db *imageDB) addImage(entry imageEntry) error {
 	if _, ok := db.Images[entry.Hash]; ok {
 		return errImageExists
 	}
+	// expand aliases
+	entry.Tags = db.expandAliases(entry.Tags)
 	db.Images[entry.Hash] = entry
 	for tag := range entry.Tags {
-		// expand alias, if there is one
-		if alias, ok := db.Aliases[tag]; ok {
-			tag = alias
-		}
-
 		// create tag if it does not already exist
 		if _, ok := db.Tags[tag]; !ok {
 			db.Tags[tag] = tagEntry{
