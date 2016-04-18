@@ -199,7 +199,7 @@ func (db *imageDB) runSetTags(item queueItem) error {
 	if err != nil {
 		return err
 	}
-	return db.addImage(item.Hash, item.Ext, item.DateAdded, item.Tags)
+	return db.addImage(item.imageEntry)
 }
 
 func (db *imageDB) runUpload(item queueItem) error {
@@ -220,7 +220,7 @@ func (db *imageDB) runUpload(item queueItem) error {
 	}
 
 	// add image to database
-	err = db.addImage(item.Hash, item.Ext, item.DateAdded, item.Tags)
+	err = db.addImage(item.imageEntry)
 	if err != nil && err != errImageExists {
 		os.Remove(filepath.Join("static", "images", item.Hash+item.Ext))
 		os.Remove(filepath.Join("static", "thumbnails", item.Hash+".jpg"))
@@ -284,4 +284,6 @@ func (db *imageDB) adminQueueHandlerPOST(w http.ResponseWriter, req *http.Reques
 	// remove from queue
 	db.Queue = append(db.Queue[:index], db.Queue[index+1:]...)
 	db.save()
+
+	http.Redirect(w, req, "/admin/queue", http.StatusSeeOther)
 }

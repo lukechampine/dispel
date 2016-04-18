@@ -137,7 +137,7 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	hash := ps.ByName("img")
-	err := db.SetTags(hash, tags)
+	err := db.QueueSetTags(hash, tags)
 	if err != nil {
 		http.Error(w, "Update failed: "+err.Error(), http.StatusInternalServerError)
 		return

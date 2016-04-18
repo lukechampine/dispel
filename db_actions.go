@@ -24,31 +24,32 @@ func currentTime() string { return time.Now().Format("Mon Jan 02 15:04:05 EST 20
 func (db *imageDB) QueueDelete(hash string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	_, ok := db.Images[hash]
+	entry, ok := db.Images[hash]
 	if !ok {
 		return errImageNotExists
 	}
 	db.Queue = append(db.Queue, queueItem{
-		Action:    actionDelete,
-		Hash:      hash,
-		DateAdded: currentTime(),
+		Action:     actionDelete,
+		imageEntry: entry,
 	})
 	return db.save()
 }
 
-// SetTags sets of the tags of an existing image.
-func (db *imageDB) SetTags(hash string, tags []string) error {
+// QueueSetTags adds an image to the tags queue.
+func (db *imageDB) QueueSetTags(hash string, tags []string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	_, ok := db.Images[hash]
+	entry, ok := db.Images[hash]
 	if !ok {
 		return errImageNotExists
 	}
+	entry.Tags = make(map[string]struct{})
+	for _, t := range tags {
+		entry.Tags[t] = struct{}{}
+	}
 	db.Queue = append(db.Queue, queueItem{
-		Action:    actionSetTags,
-		Hash:      hash,
-		DateAdded: currentTime(),
-		Tags:      tags,
+		Action:     actionSetTags,
+		imageEntry: entry,
 	})
 	return db.save()
 }
@@ -96,15 +97,23 @@ func (db *imageDB) QueueUpload(r io.Reader, tags []string, ext string) error {
 		return err
 	}
 
+	// contruct entry
+	entry := imageEntry{
+		Hash:      hash,
+		Ext:       ext,
+		DateAdded: currentTime(),
+		Tags:      make(map[string]struct{}),
+	}
+	for _, t := range tags {
+		entry.Tags[t] = struct{}{}
+	}
+
 	// add image to queue
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.Queue = append(db.Queue, queueItem{
-		Action:    actionUpload,
-		Hash:      hash,
-		Ext:       ext,
-		DateAdded: currentTime(),
-		Tags:      tags,
+		Action:     actionUpload,
+		imageEntry: entry,
 	})
 	return db.save()
 }

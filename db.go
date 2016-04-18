@@ -33,11 +33,8 @@ type (
 
 	// a queueItem is a user action awaiting review
 	queueItem struct {
-		Action    string
-		Hash      string
-		Ext       string
-		DateAdded string
-		Tags      []string
+		Action string
+		imageEntry
 	}
 
 	// imageDB is a tagged image database.
@@ -161,26 +158,12 @@ func (db *imageDB) lookupByTags(include, exclude []string) (imgs []imageEntry, e
 }
 
 // addImage adds an image and its tags to the database.
-func (db *imageDB) addImage(hash, ext, date string, tags []string) error {
-	if _, ok := db.Images[hash]; ok {
+func (db *imageDB) addImage(entry imageEntry) error {
+	if _, ok := db.Images[entry.Hash]; ok {
 		return errImageExists
 	}
-	// create imageEntry without any tags, then call addTags
-	db.Images[hash] = imageEntry{
-		Hash:      hash,
-		Ext:       ext,
-		DateAdded: date,
-		Tags:      make(map[string]struct{}),
-	}
-	return db.addTags(hash, tags)
-}
-
-// addTags adds a set of tags to an image.
-func (db *imageDB) addTags(hash string, tags []string) error {
-	if _, ok := db.Images[hash]; !ok {
-		return errImageNotExists
-	}
-	for _, tag := range tags {
+	db.Images[entry.Hash] = entry
+	for tag := range entry.Tags {
 		// expand alias, if there is one
 		if alias, ok := db.Aliases[tag]; ok {
 			tag = alias
@@ -193,10 +176,8 @@ func (db *imageDB) addTags(hash string, tags []string) error {
 				Images: make(map[string]struct{}),
 			}
 		}
-		// add tag to image
-		db.Images[hash].Tags[tag] = struct{}{}
 		// add image to tag
-		db.Tags[tag].Images[hash] = struct{}{}
+		db.Tags[tag].Images[entry.Hash] = struct{}{}
 	}
 	return nil
 }
