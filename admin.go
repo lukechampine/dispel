@@ -24,16 +24,17 @@ var adminQueueTemplate = template.Must(template.New("adminQueue").Parse(`
 		</header>
 		<div class="flex">
 		</div>
-		<div class="queue">
-			{{ range . }}
-				<div>
-					{{ .Action }}
-					{{ .DateAdded }}
-					{{ .Hash }}
-					{{ range .Tags }}
-						{{ . }}
-					{{ end }}
-				</div>
+		<div class="imagelist">
+			{{ range $index, $entry := . }}
+				<a href="/admin/queue?item={{ $index }}">
+					<span class="thumb">
+						{{ if eq $entry.Action "upload" }}
+						<img class="preview" src="/admin/queue/{{ $entry.Hash }}_thumb.jpg" />
+						{{ else }}
+						<img class="preview" src="/static/thumbnails/{{ $entry.Hash }}.jpg" />
+						{{ end }}
+					</span>
+				</a>
 			{{ else }}
 				<span>Nothing in the queue!</span><br/><br/>
 			{{ end }}
@@ -64,11 +65,10 @@ var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Pa
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
 			</div>
 			<div class="judge">
-				<form action="/admin/queue?item=0&approve=true" method="post">
-					<button type="submit">Approve</button>
-				</form>
-				<form action="/admin/queue?item=0&approve=false" method="post">
-					<button type="submit">Deny</button>
+				<h5>Delete this image?</h5>
+				<form action="" method="post">
+					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -97,13 +97,12 @@ var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").
 			<div class="content-img">
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
 			</div>
-			<textarea name="tags">{{ range .Tags }}{{ . }} {{ end }}</textarea>
+			<textarea name="tags">{{ range $tag, $_ := .Tags }}{{ $tag }} {{ end }}</textarea>
 			<div class="judge">
-				<form action="/admin/queue?item=0&approve=true" method="post">
-					<button type="submit">Approve</button>
-				</form>
-				<form action="/admin/queue?item=0&approve=false" method="post">
-					<button type="submit">Deny</button>
+				<h5>Modify this image's tags?</h5>
+				<form action="" method="post">
+					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -132,13 +131,12 @@ var adminQueueUploadTemplate = template.Must(template.New("adminQueueUpload").Pa
 			<div class="content-img">
 				<img style="max-width: 100%;" src="/admin/queue/{{ .Hash }}{{ .Ext }}" />
 			</div>
-			<textarea name="tags">{{ range .Tags }}{{ . }} {{ end }}</textarea>
+			<textarea name="tags">{{ range $tag, $_ := .Tags }}{{ $tag }} {{ end }}</textarea>
 			<div class="judge">
-				<form action="/admin/queue?item=0&approve=true" method="post">
-					<button type="submit">Approve</button>
-				</form>
-				<form action="/admin/queue?item=0&approve=false" method="post">
-					<button type="submit">Deny</button>
+				<h5>Add this image?</h5>
+				<form action="" method="post">
+					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
