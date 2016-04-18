@@ -64,10 +64,11 @@ var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Pa
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
 			</div>
 			<div class="judge">
-				<h5>Approve?</h5>
-				<form action="/images/update/{{ .Hash }}" method="post">
-					<textarea name="tags">{{ range $tag, $element := .Tags }}{{ $tag }} {{ end }}</textarea>
-					<input type="submit" value="Save changes" />
+				<form action="/admin/queue?item=0&approve=true" method="post">
+					<button type="submit">Approve</button>
+				</form>
+				<form action="/admin/queue?item=0&approve=false" method="post">
+					<button type="submit">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -96,11 +97,13 @@ var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").
 			<div class="content-img">
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
 			</div>
+			<textarea name="tags">{{ range .Tags }}{{ . }} {{ end }}</textarea>
 			<div class="judge">
-				<h5>Approve?</h5>
-				<form action="/images/update/{{ .Hash }}" method="post">
-					<textarea name="tags">{{ range $tag, $element := .Tags }}{{ $tag }} {{ end }}</textarea>
-					<input type="submit" value="Save changes" />
+				<form action="/admin/queue?item=0&approve=true" method="post">
+					<button type="submit">Approve</button>
+				</form>
+				<form action="/admin/queue?item=0&approve=false" method="post">
+					<button type="submit">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -164,8 +167,7 @@ func (db *imageDB) adminQueueHandler(w http.ResponseWriter, req *http.Request, _
 
 	var index int
 	_, err := fmt.Sscan(req.FormValue("item"), &index)
-	if err != nil || index < 0 || index > len(db.Queue) {
-		db.mu.RUnlock()
+	if err != nil || index < 0 || index >= len(db.Queue) {
 		http.Error(w, "invalid queue index", http.StatusBadRequest)
 		return
 	}
@@ -176,6 +178,8 @@ func (db *imageDB) adminQueueHandler(w http.ResponseWriter, req *http.Request, _
 		adminQueueSetTagsTemplate.Execute(w, item)
 	case actionUpload:
 		adminQueueUploadTemplate.Execute(w, item)
+	default:
+		http.Error(w, "unknown action: "+item.Action, http.StatusInternalServerError)
 	}
 }
 
@@ -254,8 +258,7 @@ func (db *imageDB) adminQueueHandlerPOST(w http.ResponseWriter, req *http.Reques
 			os.Remove(filepath.Join("queue", item.Hash+"_thumb.jpg"))
 			os.Remove(filepath.Join("queue", item.Hash+item.Ext))
 		}
-		db.Queue = append(db.Queue[:index], db.Queue[index+1:]...)
-		return
+		goto done
 	}
 
 	switch item.Action {
@@ -281,6 +284,7 @@ func (db *imageDB) adminQueueHandlerPOST(w http.ResponseWriter, req *http.Reques
 		panic("bad action type: " + item.Action)
 	}
 
+done:
 	// remove from queue
 	db.Queue = append(db.Queue[:index], db.Queue[index+1:]...)
 	db.save()
