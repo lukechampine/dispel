@@ -19,16 +19,18 @@ var (
 )
 
 type (
+	stringSet map[string]struct{}
+
 	tagEntry struct {
 		Name   string
-		Images map[string]struct{}
+		Images stringSet
 	}
 
 	imageEntry struct {
 		Hash      string
 		Ext       string
 		DateAdded string
-		Tags      map[string]struct{}
+		Tags      stringSet
 	}
 
 	// a queueItem is a user action awaiting review
@@ -50,6 +52,33 @@ type (
 	}
 )
 
+func toStringSet(strs []string) stringSet {
+	ss := make(stringSet)
+	for _, str := range strs {
+		ss[str] = struct{}{}
+	}
+	return ss
+}
+
+func fromStringSet(ss stringSet) []string {
+	var strs []string
+	for str := range ss {
+		strs = append(strs, str)
+	}
+	return strs
+}
+
+func (ss stringSet) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fromStringSet(ss))
+}
+
+func (ss *stringSet) UnmarshalJSON(b []byte) error {
+	var strs []string
+	err := json.Unmarshal(b, &strs)
+	*ss = toStringSet(strs)
+	return err
+}
+
 // checkTags returns true if the existence of each tag in the imageEntry
 // accords with check.
 func (ie imageEntry) checkTags(tags []string, check bool) bool {
@@ -66,60 +95,6 @@ func (ie imageEntry) hasTags(tags []string) bool { return ie.checkTags(tags, tru
 
 // missingTags returns true if the imageEntry contains none of the specified tags.
 func (ie imageEntry) missingTags(tags []string) bool { return ie.checkTags(tags, false) }
-
-func (ie imageEntry) MarshalJSON() ([]byte, error) {
-	data := struct {
-		Hash      string
-		Ext       string
-		DateAdded string
-		Tags      []string
-	}{ie.Hash, ie.Ext, ie.DateAdded, nil}
-	for t := range ie.Tags {
-		data.Tags = append(data.Tags, t)
-	}
-	return json.Marshal(data)
-}
-
-func (ie *imageEntry) UnmarshalJSON(b []byte) error {
-	var data struct {
-		Hash      string
-		Ext       string
-		DateAdded string
-		Tags      []string
-	}
-	err := json.Unmarshal(b, &data)
-	ie.Hash, ie.Ext, ie.DateAdded = data.Hash, data.Ext, data.DateAdded
-	ie.Tags = make(map[string]struct{})
-	for _, t := range data.Tags {
-		ie.Tags[t] = struct{}{}
-	}
-	return err
-}
-
-func (te tagEntry) MarshalJSON() ([]byte, error) {
-	data := struct {
-		Name   string
-		Images []string
-	}{te.Name, nil}
-	for img := range te.Images {
-		data.Images = append(data.Images, img)
-	}
-	return json.Marshal(data)
-}
-
-func (te *tagEntry) UnmarshalJSON(b []byte) error {
-	var data struct {
-		Name   string
-		Images []string
-	}
-	err := json.Unmarshal(b, &data)
-	te.Name = data.Name
-	te.Images = make(map[string]struct{})
-	for _, img := range data.Images {
-		te.Images[img] = struct{}{}
-	}
-	return err
-}
 
 // lookupByTags returns the set of images that match all of 'include' and none
 // of 'exclude'.
@@ -173,7 +148,7 @@ func (db *imageDB) addImage(entry imageEntry) error {
 		if _, ok := db.Tags[tag]; !ok {
 			db.Tags[tag] = tagEntry{
 				Name:   tag,
-				Images: make(map[string]struct{}),
+				Images: make(stringSet),
 			}
 		}
 		// add image to tag

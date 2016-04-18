@@ -43,7 +43,7 @@ func (db *imageDB) QueueSetTags(hash string, tags []string) error {
 	if !ok {
 		return errImageNotExists
 	}
-	entry.Tags = make(map[string]struct{})
+	entry.Tags = make(stringSet)
 	for _, t := range tags {
 		entry.Tags[t] = struct{}{}
 	}
@@ -102,7 +102,7 @@ func (db *imageDB) QueueUpload(r io.Reader, tags []string, ext string) error {
 		Hash:      hash,
 		Ext:       ext,
 		DateAdded: currentTime(),
-		Tags:      make(map[string]struct{}),
+		Tags:      make(stringSet),
 	}
 	for _, t := range tags {
 		entry.Tags[t] = struct{}{}
