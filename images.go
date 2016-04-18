@@ -147,7 +147,7 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	err := db.Delete(ps.ByName("img"))
+	err := db.QueueDelete(ps.ByName("img"))
 	if err != nil {
 		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)
 		return

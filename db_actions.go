@@ -18,23 +18,21 @@ import (
 	"github.com/nfnt/resize"
 )
 
-// Delete removes an image from the database, along with its corresponding
-// file and thumbnail.
-func (db *imageDB) Delete(hash string) error {
+func currentTime() string { return time.Now().Format("Mon Jan 02 15:04:05 EST 2006") }
+
+// QueueDelete adds an image to the delete queue.
+func (db *imageDB) QueueDelete(hash string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	entry, ok := db.Images[hash]
+	_, ok := db.Images[hash]
 	if !ok {
 		return errImageNotExists
 	}
-	err := db.removeImage(entry.Hash)
-	if err != nil {
-		return err
-	}
-	// delete image + thumbnail from disk
-	os.Remove(filepath.Join("static", "images", entry.Hash+entry.Ext))
-	os.Remove(filepath.Join("static", "thumbnails", entry.Hash+".jpg"))
-
+	db.Queue = append(db.Queue, queueItem{
+		Action:    actionDelete,
+		Hash:      hash,
+		DateAdded: currentTime(),
+	})
 	return db.save()
 }
 
@@ -42,28 +40,26 @@ func (db *imageDB) Delete(hash string) error {
 func (db *imageDB) SetTags(hash string, tags []string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	img, ok := db.Images[hash]
+	_, ok := db.Images[hash]
 	if !ok {
 		return errImageNotExists
 	}
-	err := db.removeImage(img.Hash)
-	if err != nil {
-		return err
-	}
-	err = db.addImage(img.Hash, img.Ext, img.DateAdded, tags)
-	if err != nil {
-		return err
-	}
+	db.Queue = append(db.Queue, queueItem{
+		Action:    actionSetTags,
+		Hash:      hash,
+		DateAdded: currentTime(),
+		Tags:      tags,
+	})
 	return db.save()
 }
 
-// Upload adds an image to the database and generates a thumbnail for it. It
-// returns the image's MD5 hash.
-func (db *imageDB) Upload(r io.Reader, tags []string, ext string) (string, error) {
+// QueueUpload adds an image to the upload queue and generates a thumbnail for
+// it. It returns the image's MD5 hash.
+func (db *imageDB) QueueUpload(r io.Reader, tags []string, ext string) error {
 	// simultaneously copy image to disk and calculate md5 hash
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "dispel")
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer tmpFile.Close()
 	hasher := md5.New()
@@ -77,43 +73,38 @@ func (db *imageDB) Upload(r io.Reader, tags []string, ext string) (string, error
 		),
 	)
 	if err != nil {
-		return "", err
+		return err
 	}
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
 	// create thumbnail
-	thumbFile, err := os.Create(filepath.Join("static", "thumbnails", hash+".jpg"))
+	thumbFile, err := os.Create(filepath.Join("queue", hash+"_thumb.jpg"))
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer thumbFile.Close()
 	thumb := resize.Thumbnail(150, 150, img, resize.MitchellNetravali)
 	err = jpeg.Encode(thumbFile, thumb, nil)
 	if err != nil {
-		os.Remove(filepath.Join("static", "thumbnails", hash+".jpg"))
-		return "", err
+		os.Remove(filepath.Join("queue", hash+"_thumb.jpg"))
+		return err
 	}
 
-	// move image file to static dir
-	err = os.Rename(tmpFile.Name(), filepath.Join("static", "images", hash+ext))
+	// move image file to queue dir
+	err = os.Rename(tmpFile.Name(), filepath.Join("queue", hash+ext))
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	// add image to database
+	// add image to queue
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	date := time.Now().Format("Mon Jan 02 15:04:05 EST 2006")
-	err = db.addImage(hash, ext, date, tags)
-	if err != nil && err != errImageExists {
-		os.Remove(filepath.Join("static", "images", hash+ext))
-		os.Remove(filepath.Join("static", "thumbnails", hash+".jpg"))
-		return "", err
-	}
-
-	err = db.save()
-	if err != nil {
-		return "", err
-	}
-	return hash, nil
+	db.Queue = append(db.Queue, queueItem{
+		Action:    actionUpload,
+		Hash:      hash,
+		Ext:       ext,
+		DateAdded: currentTime(),
+		Tags:      tags,
+	})
+	return db.save()
 }

@@ -25,16 +25,14 @@ func main() {
 		return
 	}
 
-	// ensure we have image+thumbnail directories
-	err = os.MkdirAll("static/images", 0700)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	err = os.MkdirAll("static/thumbnails", 0700)
-	if err != nil {
-		log.Fatal(err)
-		return
+	// ensure we have image+thumbnail+queue directories
+	dirs := []string{"static/images", "static/thumbnails", "queue"}
+	for _, d := range dirs {
+		err = os.MkdirAll(d, 0700)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 	}
 
 	router := httprouter.New()
@@ -45,6 +43,10 @@ func main() {
 	router.POST("/images/update/:img", imgDB.imageUpdateHandlerPOST)
 	router.GET("/images/delete/:img", imgDB.imageDeleteHandler)
 	router.GET("/images/show/:img", imgDB.imageShowHandler)
+	router.GET("/admin", imgDB.adminHandler)
+	router.GET("/admin/queue", imgDB.adminQueueHandler)
+	router.POST("/admin/queue", imgDB.adminQueueHandlerPOST)
+	router.GET("/admin/queue/:path", imgDB.adminQueueImg)
 
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 

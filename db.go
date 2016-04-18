@@ -7,6 +7,12 @@ import (
 	"sync"
 )
 
+const (
+	actionUpload  = "upload"
+	actionSetTags = "set tags"
+	actionDelete  = "delete"
+)
+
 var (
 	errImageExists    = errors.New("image already exists")
 	errImageNotExists = errors.New("image does not exist")
@@ -25,12 +31,23 @@ type (
 		Tags      map[string]struct{}
 	}
 
+	// a queueItem is a user action awaiting review
+	queueItem struct {
+		Action    string
+		Hash      string
+		Ext       string
+		DateAdded string
+		Tags      []string
+	}
+
 	// imageDB is a tagged image database.
 	// eventually a true db, for now all in-memory
 	imageDB struct {
 		Tags    map[string]tagEntry
 		Images  map[string]imageEntry
 		Aliases map[string]string
+
+		Queue []queueItem
 
 		mu sync.RWMutex
 	}
