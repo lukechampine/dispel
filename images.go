@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 
@@ -136,6 +137,7 @@ func (db *imageDB) imageSearchHandler(w http.ResponseWriter, req *http.Request, 
 	if len(urls) > 100 {
 		urls = urls[:100]
 	}
+	log.Printf("Search from %v: %v", req.RemoteAddr, req.FormValue("t"))
 	searchImageTemplate.Execute(w, struct {
 		Search string
 		Images []imageEntry
@@ -150,6 +152,7 @@ func (db *imageDB) imageShowHandler(w http.ResponseWriter, req *http.Request, ps
 		http.NotFound(w, req)
 		return
 	}
+	log.Printf("Hit from %v on %v", req.RemoteAddr, entry.Hash)
 	showImageTemplate.Execute(w, entry)
 }
 
