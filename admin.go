@@ -46,6 +46,11 @@ var adminQueueTemplate = template.Must(template.New("adminQueue").Parse(`
 </html>
 `))
 
+type queueDeleteArgs struct {
+	queueItem
+	Index int
+}
+
 var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Parse(`
 <!DOCTYPE html>
 <html>
@@ -67,8 +72,8 @@ var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Pa
 			<div class="judge">
 				<h5>Delete this image?</h5>
 				<form action="" method="post">
-					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
-					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -79,8 +84,9 @@ var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Pa
 </html>
 `))
 
-type setTagsArgs struct {
+type queueSetTagsArgs struct {
 	queueItem
+	Index          int
 	Added, Removed []string
 }
 
@@ -108,8 +114,8 @@ var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").
 			<div class="judge">
 				<h5>Modify this image's tags?</h5>
 				<form action="" method="post">
-					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
-					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -119,6 +125,11 @@ var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").
 	</script>
 </html>
 `))
+
+type queueUploadArgs struct {
+	queueItem
+	Index int
+}
 
 var adminQueueUploadTemplate = template.Must(template.New("adminQueueUpload").Parse(`
 <!DOCTYPE html>
@@ -142,8 +153,8 @@ var adminQueueUploadTemplate = template.Must(template.New("adminQueueUpload").Pa
 			<div class="judge">
 				<h5>Add this image?</h5>
 				<form action="" method="post">
-					<button type="submit" formaction="/admin/queue?item=0&approve=true">Approve</button>
-					<button type="submit" formaction="/admin/queue?item=0&approve=false">Deny</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=true">Approve</button>
+					<button type="submit" formaction="/admin/queue?item={{ .Index }}&approve=false">Deny</button>
 				</form>
 			</div>
 		</div>
@@ -178,12 +189,12 @@ func (db *imageDB) adminQueueHandler(w http.ResponseWriter, req *http.Request, _
 	}
 	switch item := db.Queue[index]; item.Action {
 	case actionDelete:
-		adminQueueDeleteTemplate.Execute(w, item)
+		adminQueueDeleteTemplate.Execute(w, queueDeleteArgs{item, index})
 	case actionSetTags:
 		added, removed := db.Images[item.Hash].Tags.diff(item.Tags)
-		adminQueueSetTagsTemplate.Execute(w, setTagsArgs{item, added, removed})
+		adminQueueSetTagsTemplate.Execute(w, queueSetTagsArgs{item, index, added, removed})
 	case actionUpload:
-		adminQueueUploadTemplate.Execute(w, item)
+		adminQueueUploadTemplate.Execute(w, queueUploadArgs{item, index})
 	default:
 		http.Error(w, "unknown action: "+item.Action, http.StatusInternalServerError)
 	}

@@ -90,12 +90,12 @@ var thanksTemplate = template.Must(template.New("thanks").Parse(`
 		<title>Dispel - {{ .Hash }}{{ .Ext }}</title>
 		<link rel="stylesheet" href="/static/css/milligram.min.css">
 		<link rel="stylesheet" href="/static/css/images.css">
-		<meta http-equiv="refresh" content="5;url=/images" />
+		<meta http-equiv="refresh" content="3;url=/images" />
 	</head>
 	<body>
 		<header>
 			<h5>Your modification has been queued for approval.<br/>Thank You!</h5>
-			<h6>You will be redirected in 5 seconds...</h6>
+			<h6>You will be redirected in 3 seconds...</h6>
 		</header>
 	</body>
 </html>
