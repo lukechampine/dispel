@@ -10,10 +10,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type uploadTemplateArgs struct {
-	Submitted bool
-}
-
 var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 <!DOCTYPE html>
 <html>
@@ -27,11 +23,6 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 			<a href="/images">Dispel</a>
 		</header>
 		<div class="flex">
-			{{ if .Submitted }}
-				<div>
-					Thanks!
-				</div>
-			{{ end }}
 			<div class="upload-form">
 				<form enctype="multipart/form-data" action="/images/upload" method="post">
 					<div>
@@ -84,9 +75,7 @@ var uploadImageTemplate = template.Must(template.New("uploadImage").Parse(`
 `))
 
 func (db *imageDB) imageUploadHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	uploadImageTemplate.Execute(w, uploadTemplateArgs{
-		Submitted: false,
-	})
+	uploadImageTemplate.Execute(w, nil)
 }
 
 func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
@@ -134,7 +123,5 @@ func (db *imageDB) imageUploadHandlerPOST(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	uploadImageTemplate.Execute(w, uploadTemplateArgs{
-		Submitted: true,
-	})
+	http.Redirect(w, req, "/thanks", http.StatusSeeOther)
 }

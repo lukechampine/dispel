@@ -37,6 +37,7 @@ func main() {
 
 	router := httprouter.New()
 	router.GET("/", indexHandler)
+	router.GET("/thanks", thanksHandler)
 	router.GET("/images", imgDB.imageSearchHandler)
 	router.GET("/images/upload", imgDB.imageUploadHandler)
 	router.POST("/images/upload", imgDB.imageUploadHandlerPOST)

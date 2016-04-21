@@ -20,6 +20,8 @@ var searchImageTemplate = template.Must(template.New("searchImage").Parse(`
 	<body>
 		<header>
 			<a href="/images">Dispel</a>
+			|
+			<a href="/images/upload">Upload</a>
 		</header>
 		<div style="margin: 0 1.5% 24px 1.5%;">
 			<input id="searchbar" type="search" placeholder="yeb guac" value="{{ .Search }}" />
@@ -59,7 +61,7 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 						<a href="/images?t={{ $tag }}">{{ $tag }}</a>
 					</div>
 				{{ end }}
-				<div style="padding-top: 1em;">
+				<div style="padding-top: 1em; display: none;">
 					<a href="/images/delete/{{ .Hash }}">Delete</a>
 				</div>
 			</div>
@@ -80,6 +82,28 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 	</body>
 </html>
 `))
+
+var thanksTemplate = template.Must(template.New("thanks").Parse(`
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Dispel - {{ .Hash }}{{ .Ext }}</title>
+		<link rel="stylesheet" href="/static/css/milligram.min.css">
+		<link rel="stylesheet" href="/static/css/images.css">
+		<meta http-equiv="refresh" content="5;url=/images" />
+	</head>
+	<body>
+		<header>
+			<h5>Your modification has been queued for approval.<br/>Thank You!</h5>
+			<h6>You will be redirected in 5 seconds...</h6>
+		</header>
+	</body>
+</html>
+`))
+
+func thanksHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	thanksTemplate.Execute(w, nil)
+}
 
 func parseTags(tagQuery string) (include, exclude []string) {
 	for _, tag := range strings.Fields(tagQuery) {
@@ -143,7 +167,7 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	http.Redirect(w, req, "/images/show/"+hash, http.StatusSeeOther)
+	http.Redirect(w, req, "/thanks", http.StatusSeeOther)
 }
 
 func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
@@ -153,5 +177,5 @@ func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, 
 		return
 	}
 
-	http.Redirect(w, req, "/images", http.StatusSeeOther)
+	http.Redirect(w, req, "/thanks", http.StatusSeeOther)
 }
