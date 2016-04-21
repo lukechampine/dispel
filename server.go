@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -10,9 +11,22 @@ import (
 )
 
 var port = flag.String("port", ":3000", "port the server will listen on")
+var adminIP = flag.String("admin", "127.0.0.1", "IP of the administrator")
 
 func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	http.Redirect(w, req, "/images", http.StatusMovedPermanently)
+}
+
+func ipWhitelist(fn httprouter.Handle, whitelistedHost string) httprouter.Handle {
+	return func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+		host, _, _ := net.SplitHostPort(req.RemoteAddr)
+		if host == whitelistedHost {
+			fn(w, req, ps)
+		} else {
+			http.Error(w, "Access denied, buttmunch. This action has been logged.", http.StatusForbidden)
+			log.Printf("Unauthorized access detected: %v tried to load route %v", req.RemoteAddr, req.URL.Path)
+		}
+	}
 }
 
 func main() {
@@ -44,10 +58,11 @@ func main() {
 	router.POST("/images/update/:img", imgDB.imageUpdateHandlerPOST)
 	router.GET("/images/delete/:img", imgDB.imageDeleteHandler)
 	router.GET("/images/show/:img", imgDB.imageShowHandler)
-	router.GET("/admin", imgDB.adminHandler)
-	router.GET("/admin/queue", imgDB.adminQueueHandler)
-	router.POST("/admin/queue", imgDB.adminQueueHandlerPOST)
-	router.GET("/admin/queue/:path", imgDB.adminQueueImg)
+
+	router.GET("/admin", ipWhitelist(imgDB.adminHandler, *adminIP))
+	router.GET("/admin/queue", ipWhitelist(imgDB.adminQueueHandler, *adminIP))
+	router.POST("/admin/queue", ipWhitelist(imgDB.adminQueueHandlerPOST, *adminIP))
+	router.GET("/admin/queue/:path", ipWhitelist(imgDB.adminQueueImg, *adminIP))
 
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
