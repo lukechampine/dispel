@@ -53,6 +53,8 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 	<body>
 		<header>
 			<a href="/images">Dispel</a>
+			|
+			<a href="/images/upload">Upload</a>
 		</header>
 		<div class="flex">
 			<div class="sidebar">
