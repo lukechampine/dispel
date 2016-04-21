@@ -68,6 +68,22 @@ func fromStringSet(ss stringSet) []string {
 	return strs
 }
 
+func (ss stringSet) diff(other stringSet) (added, removed []string) {
+	// in other, but not ss
+	for str := range other {
+		if _, ok := ss[str]; !ok {
+			added = append(added, str)
+		}
+	}
+	// in ss, but not other
+	for str := range ss {
+		if _, ok := other[str]; !ok {
+			removed = append(removed, str)
+		}
+	}
+	return
+}
+
 func (ss stringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(fromStringSet(ss))
 }

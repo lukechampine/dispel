@@ -79,6 +79,11 @@ var adminQueueDeleteTemplate = template.Must(template.New("adminQueueDelete").Pa
 </html>
 `))
 
+type setTagsArgs struct {
+	queueItem
+	Added, Removed []string
+}
+
 var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").Parse(`
 <!DOCTYPE html>
 <html>
@@ -98,6 +103,8 @@ var adminQueueSetTagsTemplate = template.Must(template.New("adminQueueSetTags").
 				<img style="max-width: 100%;" src="/static/images/{{ .Hash }}{{ .Ext }}" />
 			</div>
 			<textarea name="tags">{{ range $tag, $_ := .Tags }}{{ $tag }} {{ end }}</textarea>
+			<h6>Added: <span style="color: green">{{ range .Added }}{{ . }} {{ end }}</span></h6>
+			<h6>Removed: <span style="color: red">{{ range .Removed }}{{ . }} {{ end }}</span></h6>
 			<div class="judge">
 				<h5>Modify this image's tags?</h5>
 				<form action="" method="post">
@@ -173,7 +180,8 @@ func (db *imageDB) adminQueueHandler(w http.ResponseWriter, req *http.Request, _
 	case actionDelete:
 		adminQueueDeleteTemplate.Execute(w, item)
 	case actionSetTags:
-		adminQueueSetTagsTemplate.Execute(w, item)
+		added, removed := db.Images[item.Hash].Tags.diff(item.Tags)
+		adminQueueSetTagsTemplate.Execute(w, setTagsArgs{item, added, removed})
 	case actionUpload:
 		adminQueueUploadTemplate.Execute(w, item)
 	default:
