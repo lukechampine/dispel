@@ -78,6 +78,17 @@ func (db *imageDB) QueueUpload(r io.Reader, tags []string, ext string) error {
 	}
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
+	db.mu.RLock()
+	curEntry, exists := db.Images[hash]
+	db.mu.RUnlock()
+	if exists {
+		// if image was already uploaded, convert to setTags action instead,
+		// adding any unseen tags.
+		added, _ := curEntry.Tags.diff(db.expandAliases(toStringSet(tags)))
+		newTags := append(fromStringSet(curEntry.Tags), added...)
+		return db.QueueSetTags(hash, newTags)
+	}
+
 	// create thumbnail
 	thumbFile, err := os.Create(filepath.Join("queue", hash+"_thumb.jpg"))
 	if err != nil {
