@@ -64,9 +64,6 @@ var showImageTemplate = template.Must(template.New("showImage").Parse(`
 						<a href="/images?t={{ $tag }}">{{ $tag }}</a>
 					</div>
 				{{ end }}
-				<div style="padding-top: 1em; display: none;">
-					<a href="/images/delete/{{ .Hash }}">Delete</a>
-				</div>
 			</div>
 			<div class="content">
 				<div class="content-img">
@@ -90,7 +87,7 @@ var thanksTemplate = template.Must(template.New("thanks").Parse(`
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Dispel - {{ .Hash }}{{ .Ext }}</title>
+		<title>Dispel - Thanks!</title>
 		<link rel="stylesheet" href="/static/css/milligram.min.css">
 		<link rel="stylesheet" href="/static/css/images.css">
 		<meta http-equiv="refresh" content="3;url=/images" />
@@ -175,7 +172,7 @@ func (db *imageDB) imageUpdateHandlerPOST(w http.ResponseWriter, req *http.Reque
 	http.Redirect(w, req, "/thanks", http.StatusSeeOther)
 }
 
-func (db *imageDB) imageDeleteHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (db *imageDB) imageDeleteHandlerPOST(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	err := db.QueueDelete(ps.ByName("img"))
 	if err != nil {
 		http.Error(w, "Delete failed: "+err.Error(), http.StatusInternalServerError)

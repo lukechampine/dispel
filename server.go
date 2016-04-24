@@ -56,7 +56,7 @@ func main() {
 	router.GET("/images/upload", imgDB.imageUploadHandler)
 	router.POST("/images/upload", imgDB.imageUploadHandlerPOST)
 	router.POST("/images/update/:img", imgDB.imageUpdateHandlerPOST)
-	router.GET("/images/delete/:img", imgDB.imageDeleteHandler)
+	router.POST("/images/delete/:img", imgDB.imageDeleteHandlerPOST)
 	router.GET("/images/show/:img", imgDB.imageShowHandler)
 
 	router.GET("/admin", ipWhitelist(imgDB.adminHandler, *adminIP))
