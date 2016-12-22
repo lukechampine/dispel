@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"sync"
 )
@@ -232,5 +233,8 @@ func newImageDB(dbpath string) (*imageDB, error) {
 		Aliases: make(map[string]string),
 	}
 	err = json.NewDecoder(f).Decode(&db)
-	return db, err
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	return db, nil
 }
